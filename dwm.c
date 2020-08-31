@@ -230,7 +230,6 @@ static void focusin(XEvent *e);
 static void focusmon(const Arg *arg);
 static void focusstack(const Arg *arg);
 static Atom getatomprop(Client *c, Atom prop);
-static int getdwmblockspid();
 static int getrootptr(int *x, int *y);
 static long getstate(Window w);
 static unsigned int getsystraywidth();
@@ -274,7 +273,10 @@ static void setup(void);
 static void seturgent(Client *c, int urg);
 static void showhide(Client *c);
 static void sigchld(int unused);
+#ifndef __OpenBSD__
+static int getdwmblockspid();
 static void sigdwmblocks(const Arg *arg);
+#endif
 static void sighup(int unused);
 static void sigterm(int unused);
 static void spawn(const Arg *arg);
@@ -1124,6 +1126,7 @@ getatomprop(Client *c, Atom prop)
 	return atom;
 }
 
+#ifndef __OpenBSD__
 int
 getdwmblockspid()
 {
@@ -1135,6 +1138,7 @@ getdwmblockspid()
 	dwmblockspid = pid;
 	return pid != 0 ? 0 : -1;
 }
+#endif
 
 int
 getrootptr(int *x, int *y)
@@ -2104,6 +2108,7 @@ sigterm(int unused)
 	quit(&a);
 }
 
+#ifndef __OpenBSD__
 void
 sigdwmblocks(const Arg *arg)
 {
@@ -2120,6 +2125,7 @@ sigdwmblocks(const Arg *arg)
 		}
 	}
 }
+#endif
 
 void
 spawn(const Arg *arg)
@@ -2740,18 +2746,25 @@ getparentprocess(pid_t p)
 {
 	unsigned int v = 0;
 
-#ifdef __linux__
+#if defined(__linux__)
 	FILE *f;
 	char buf[256];
 	snprintf(buf, sizeof(buf) - 1, "/proc/%u/stat", (unsigned)p);
 
 	if (!(f = fopen(buf, "r")))
-		return 0;
+		return (pid_t)0;
 
-	fscanf(f, "%*u %*s %*c %u", &v);
+	if (fscanf(f, "%*u %*s %*c %u", (unsigned *)&v) != 1)
+		v = (pid_t)0;
 	fclose(f);
-#endif /* __linux__ */
+#elif defined(__FreeBSD__)
+	struct kinfo_proc *proc = kinfo_getproc(p);
+	if (!proc)
+		return (pid_t)0;
 
+	v = proc->ki_ppid;
+	free(proc);
+#endif
 	return (pid_t)v;
 }
 
