@@ -5,7 +5,7 @@
 #define TERMCLASS "St"
 
 /* appearance */
-static const unsigned int borderpx  = 4;        /* border pixel of windows */
+static unsigned int borderpx  = 3;        /* border pixel of windows */
 static const unsigned int snap      = 32;       /* snap pixel */
 static const unsigned int systraypinning = 0;   /* 0: sloppy systray follows selected monitor, >0: pin systray to monitor X */
 static const unsigned int systrayspacing = 2;   /* systray spacing */
@@ -63,9 +63,9 @@ static const Rule rules[] = {
 };
 
 /* layout(s) */
-static const float mfact     = 0.55; /* factor of master area size [0.05..0.95] */
-static const int nmaster     = 1;    /* number of clients in master area */
-static const int resizehints = 1;    /* 1 means respect size hints in tiled resizals */
+static float mfact     = 0.55; /* factor of master area size [0.05..0.95] */
+static int nmaster     = 1;    /* number of clients in master area */
+static int resizehints = 1;    /* 1 means respect size hints in tiled resizals */
 #define FORCE_VSPLIT 1  /* nrowgrid layout: force two clients to always split vertically */
 #include "vanitygaps.c"
 static const Layout layouts[] = {
@@ -106,12 +106,36 @@ static const Layout layouts[] = {
 #define SHCMD(cmd) { .v = (const char*[]){ "/bin/sh", "-c", cmd, NULL } }
 
 /* commands */
-static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
-static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, "-nb", normbgcolor, "-nf", normfgcolor, "-sb", selbgcolor, "-sf", selfgcolor, NULL };
 static const char *termcmd[]  = { TERMINAL, NULL };
+
+/*
+ * Xresources preferences to load at startup
+ */
+ResourcePref resources[] = {
+		{ "color0",		STRING,	&normbordercolor },
+		{ "color8",		STRING,	&selbordercolor },
+		{ "color0",		STRING,	&normbgcolor },
+		{ "color4",		STRING,	&normfgcolor },
+		{ "color0",		STRING,	&selfgcolor },
+		{ "color4",		STRING,	&selbgcolor },
+		{ "borderpx",		INTEGER, &borderpx },
+		{ "snap",		INTEGER, &snap },
+		{ "showbar",		INTEGER, &showbar },
+		{ "topbar",		INTEGER, &topbar },
+		{ "nmaster",		INTEGER, &nmaster },
+		{ "resizehints",	INTEGER, &resizehints },
+		{ "mfact",		FLOAT,	&mfact },
+		{ "gappih",		INTEGER, &gappih },
+		{ "gappiv",		INTEGER, &gappiv },
+		{ "gappoh",		INTEGER, &gappoh },
+		{ "gappov",		INTEGER, &gappov },
+		{ "swallowfloating",	INTEGER, &swallowfloating },
+		{ "smartgaps",		INTEGER, &smartgaps },
+};
 
 #include <X11/XF86keysym.h>
 #include "shiftview.c"
+
 static Key keys[] = {
 	/* modifier                     key        function        argument */
 	STACKKEYS(MODKEY,                          focus)
@@ -170,7 +194,7 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,		XK_a,		defaultgaps,	{0} },
 	{ MODKEY,			XK_s,		togglesticky,	{0} },
 	{ MODKEY|ShiftMask,		XK_s,		spawn,		SHCMD("passmenu") },
-	{ MODKEY,			XK_d,		spawn,          {.v = dmenucmd } },
+	{ MODKEY,			XK_d,		spawn,          SHCMD("dmenu_run") },
 	/* { MODKEY,			XK_d,		spawn,		SHCMD("") } }, */
 	{ MODKEY,			XK_f,		togglefullscr,	{0} },
 	{ MODKEY|ShiftMask,		XK_f,		setlayout,	{.v = &layouts[8]} },
@@ -219,14 +243,14 @@ static Key keys[] = {
 	{ MODKEY,			XK_F2,		spawn,		SHCMD("tutorialvids") },
 	{ MODKEY,			XK_F3,		spawn,		SHCMD("displayselect") },
 	{ MODKEY,			XK_F4,		spawn,		SHCMD(TERMINAL " -e pulsemixer; kill -44 $(pidof dwmblocks)") },
-	{ MODKEY,			XK_F5,		xrdb,		{.v = NULL } },
+	/* { MODKEY,			XK_F5,		xrdb,		{.v = NULL } }, */
 	{ MODKEY,			XK_F6,		spawn,		SHCMD("torwrap") },
 	{ MODKEY,			XK_F7,		spawn,		SHCMD("td-toggle") },
 	{ MODKEY,			XK_F8,		spawn,		SHCMD("mw -Y") },
 	{ MODKEY,			XK_F9,		spawn,		SHCMD("dmenumount") },
 	{ MODKEY,			XK_F10,		spawn,		SHCMD("dmenuumount") },
-	{ MODKEY,			XK_F11,		spawn,		SHCMD("camtoggle") },
-	{ MODKEY,			XK_F12,		xrdb,		{.v = NULL } },
+	{ MODKEY,			XK_F11,		spawn,		SHCMD("mpv --no-cache --no-osc --no-input-default-bindings --input-conf=/dev/null --title=webcam $(ls /dev/video[0,2,4,6,8] | tail -n 1)") },
+	/* { MODKEY,			XK_F12,		xrdb,		{.v = NULL } }, */
 	{ MODKEY,			XK_space,	zoom,		{0} },
 	{ MODKEY|ShiftMask,		XK_space,	togglefloating,	{0} },
 
